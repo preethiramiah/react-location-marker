@@ -1,30 +1,18 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import LocateMeButton from "./locatemebutton";
 import GoogleMap from "./googlemap";
 import { Container, Row, Col } from "react-bootstrap";
+import Marker from "./marker";
 
 const LocationFinder = () => {
     const [mapsApi, setMapsApi] = useState({ map: null, maps: null });
     const [mapProps, setMapProps] = useState({
         currentCoordinates: { lat: 0, lng: 0 },
         zoom: 1,
-        marker: null,
-        infoWindow: null,
+        showMarker: false,
+        content: "",
     });
     const zoomLevelAfterLocating = 15;
-
-    useEffect(() => {
-        if (mapProps.zoom !== 1) {
-            const infoWindow = mapProps.infoWindow;
-            infoWindow.setContent(mapProps.content);
-            infoWindow.open(mapsApi.map, mapProps.marker);
-            mapsApi.maps.event.addListener(
-                infoWindow,
-                "closeclick",
-                closeInfoWindowHandler
-            );
-        }
-    });
 
     const googleApiLoaded = (map, maps) => {
         setMapsApi({ map: map, maps: maps });
@@ -61,15 +49,7 @@ const LocationFinder = () => {
                         lng: longitude,
                     },
                     zoom: zoomLevelAfterLocating,
-                    infoWindow: new mapsApi.maps.InfoWindow(),
-                    marker: new mapsApi.maps.Marker({
-                        position: {
-                            lat: latitude,
-                            lng: longitude,
-                        },
-                        map: mapsApi.map,
-                        visible: true,
-                    }),
+                    showMarker: true,
                     content: results[0].formatted_address,
                 });
             } else {
@@ -78,20 +58,6 @@ const LocationFinder = () => {
         } else {
             console.log("Geocoder failed due to: " + status);
         }
-    };
-
-    const closeInfoWindowHandler = () => {
-        mapProps.marker.visible = false;
-        setMapProps({
-            currentCoordinates: {
-                lat: 0,
-                lng: 0,
-            },
-            zoom: 1,
-            marker: null,
-            infoWindow: null,
-            content: "",
-        });
     };
 
     return (
@@ -104,7 +70,13 @@ const LocationFinder = () => {
                         onGoogleApiLoaded={({ map, maps }) =>
                             googleApiLoaded(map, maps)
                         }
-                    ></GoogleMap>
+                    >
+                        <Marker
+                            showMarker={mapProps.showMarker}
+                            place={mapProps.content}
+                            mapsApi={mapsApi}
+                        />
+                    </GoogleMap>
                 </Col>
                 <LocateMeButton onClick={() => findCurrentLocation()} />
             </Row>
